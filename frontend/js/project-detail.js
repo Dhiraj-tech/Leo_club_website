@@ -346,7 +346,7 @@ document.addEventListener('DOMContentLoaded', function() {
             projectImage.style.display = 'block';
             projectImage.style.alignItems = 'unset';
             projectImage.style.justifyContent = 'unset';
-            projectImage.innerHTML = `<img src="images/awards.jpg" alt="${project.title}" class="detail-image">`;
+            projectImage.innerHTML = `<img src="images/award.jpg" alt="${project.title}" class="detail-image">`;
         } else if (projectId === 2) {
             // Use image for Elder Care & Support Program
             projectImage.style.background = 'none';
@@ -367,7 +367,7 @@ document.addEventListener('DOMContentLoaded', function() {
             projectImage.style.display = 'block';
             projectImage.style.alignItems = 'unset';
             projectImage.style.justifyContent = 'unset';
-            projectImage.innerHTML = `<img src="images/disaster.jpg" alt="${project.title}" class="detail-image">`;
+            projectImage.innerHTML = `<img src="images/disasters.jpg" alt="${project.title}" class="detail-image">`;
         } else if (projectId === 5) {
             // Use image for Children Support & Development
             projectImage.style.background = 'none';
@@ -381,7 +381,7 @@ document.addEventListener('DOMContentLoaded', function() {
             projectImage.style.display = 'block';
             projectImage.style.alignItems = 'unset';
             projectImage.style.justifyContent = 'unset';
-            projectImage.innerHTML = `<img src="images/environment.png" alt="${project.title}" class="detail-image">`;
+            projectImage.innerHTML = `<img src="images/environments.png" alt="${project.title}" class="detail-image">`;
         } else if (projectId === 7) {
             // Use image for Arohan 1.0: Mentorship Program
             projectImage.style.background = 'none';
