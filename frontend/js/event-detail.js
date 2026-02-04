@@ -237,7 +237,7 @@ document.addEventListener('DOMContentLoaded', function() {
         eventImage.style.display = 'block';
         eventImage.style.alignItems = 'unset';
         eventImage.style.justifyContent = 'unset';
-        eventImage.innerHTML = `<img src="images/dashain-event.jpg" alt="${event.title}" class="detail-image">`;
+        eventImage.innerHTML = `<img src="images/dashain.jpg" alt="${event.title}" class="detail-image">`;
     } else {
         eventImage.style.background = event.gradient;
         eventImage.style.display = 'flex';
