@@ -1,6 +1,6 @@
 // Contact Messages page: table (Name, Email, Message preview, Date, View), pagination
 let currentPage = 1;
-const limit = 10;
+const limit = 5;
 
 function truncateMessage(msg, maxLen = 50) {
     if (!msg) return '';
@@ -84,7 +84,7 @@ async function showContactDetail(id) {
 }
 
 async function deleteContact(id) {
-    if (!confirm('Are you sure you want to delete this contact message?')) return;
+    if (!confirm('Are you sure you want to delete this contact message? This action cannot be undone.')) return;
     try {
         const res = await adminFetch(`${API_BASE}/api/contact/${id}`, { method: 'DELETE' });
         const text = await res.text();

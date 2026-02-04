@@ -1,6 +1,6 @@
 // Membership Requests page: table, View, Approve/Reject, pagination
 let currentPage = 1;
-const limit = 10;
+const limit = 5;
 
 function statusBadge(status) {
     const cls = status === 'approved' ? 'bg-success' : status === 'rejected' ? 'bg-danger' : 'badge-pending';
@@ -106,14 +106,22 @@ async function updateStatus(id, status) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ status })
         });
-        if (res.ok) loadMembers();
+        if (res.ok) {
+            const statusText = status === 'approved' ? 'approved' : 'rejected';
+            showAdminSuccess(`Membership application has been ${statusText} successfully.`);
+            loadMembers();
+        } else {
+            const json = await res.json().catch(() => ({}));
+            alert(json.message || `Failed to ${status} membership application.`);
+        }
     } catch (err) {
         console.error(err);
+        alert('Network error. Could not update membership status.');
     }
 }
 
 async function deleteMembership(id) {
-    if (!confirm('Are you sure you want to delete this membership application?')) return;
+    if (!confirm('Are you sure you want to delete this membership application? This action cannot be undone.')) return;
     try {
         const res = await adminFetch(`${API_BASE}/api/membership/${id}`, { method: 'DELETE' });
         const text = await res.text();

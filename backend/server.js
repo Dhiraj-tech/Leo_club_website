@@ -31,6 +31,7 @@ mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/leo-club'
 app.use('/api/admin', require('./routes/auth'));
 app.use('/api/membership', require('./routes/membership'));
 app.use('/api/contact', require('./routes/contact'));
+app.use('/api/newsletter', require('./routes/newsletter'));
 
 app.use(express.static(path.join(__dirname, '../frontend')));
 

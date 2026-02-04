@@ -4,7 +4,8 @@
 const API_BASE_URL = window.location.origin; // Automatically uses current server origin
 const API_ENDPOINTS = {
     membership: `${API_BASE_URL}/api/membership`,
-    contact: `${API_BASE_URL}/api/contact`
+    contact: `${API_BASE_URL}/api/contact`,
+    newsletter: `${API_BASE_URL}/api/newsletter`
 };
 
 // Ensure body has top padding equal to navbar height (fixes gap under navbar)
@@ -52,7 +53,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 const result = await response.json();
                 
                 if (response.ok) {
-                    showAlert('success', 'Thank you! Your membership application has been submitted successfully.');
+                    showAlert('success', 'Thank you! Your application has been submitted. We\'ll notify you via email about the status.');
                     membershipForm.reset();
                 } else {
                     showAlert('danger', result.message || 'An error occurred. Please try again.');
@@ -259,19 +260,77 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Newsletter form handler (simple local UX)
+    // Newsletter form handler
     const newsletterForm = document.getElementById('newsletterForm');
     if (newsletterForm) {
-        newsletterForm.addEventListener('submit', function(e) {
+        const subscribeBtn = document.getElementById('subscribeBtn');
+        const emailInput = document.getElementById('newsletterEmail');
+        
+        newsletterForm.addEventListener('submit', async function(e) {
             e.preventDefault();
-            const email = document.getElementById('newsletterEmail');
-            if (!email || !email.value) {
+            
+            const email = emailInput.value.trim();
+            
+            if (!email) {
                 showAlert('danger', 'Please enter a valid email address.');
                 return;
             }
-            // Simulate subscription success
-            showAlert('success', 'Thanks! You have been subscribed.');
-            newsletterForm.reset();
+
+            // Validate email format
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(email)) {
+                showAlert('danger', 'Please enter a valid email address.');
+                return;
+            }
+
+            // Disable button during submission
+            subscribeBtn.disabled = true;
+            subscribeBtn.textContent = 'Subscribing...';
+
+            try {
+                const url = API_ENDPOINTS.newsletter + '/subscribe';
+                console.log('Subscribing to newsletter:', url);
+                
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ email: email })
+                });
+
+                console.log('Response status:', response.status);
+
+                // Check if response is ok before trying to parse JSON
+                let result;
+                try {
+                    const text = await response.text();
+                    result = text ? JSON.parse(text) : {};
+                } catch (parseError) {
+                    console.error('JSON parse error:', parseError);
+                    showAlert('danger', 'Server error. Please try again later.');
+                    return;
+                }
+                
+                if (response.ok) {
+                    showAlert('success', result.message || 'Thank you for subscribing! Please check your email for confirmation.');
+                    newsletterForm.reset();
+                } else {
+                    showAlert('danger', result.message || 'An error occurred. Please try again.');
+                }
+            } catch (error) {
+                console.error('Newsletter subscription error:', error);
+                console.error('Error details:', {
+                    message: error.message,
+                    stack: error.stack,
+                    endpoint: API_ENDPOINTS.newsletter + '/subscribe'
+                });
+                showAlert('danger', 'Network error. Please check your connection and try again. If the problem persists, make sure the server is running and has been restarted after adding the newsletter route.');
+            } finally {
+                // Re-enable button
+                subscribeBtn.disabled = false;
+                subscribeBtn.textContent = 'Subscribe';
+            }
         });
     }
 });

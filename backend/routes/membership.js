@@ -2,10 +2,49 @@ const express = require('express');
 const router = express.Router();
 const Membership = require('../models/Membership');
 const requireAuth = require('../middleware/requireAuth');
+const { sendApprovalEmail, sendRejectionEmail } = require('../utils/emailService');
 
 // Submit membership application (public)
 router.post('/', async (req, res) => {
     try {
+        // Normalize email to lowercase and trim whitespace
+        const normalizedEmail = req.body.email ? req.body.email.toLowerCase().trim() : null;
+        
+        if (!normalizedEmail) {
+            return res.status(400).json({
+                success: false,
+                message: 'Email address is required'
+            });
+        }
+        
+        // Check if email already exists in the database
+        // Schema already converts to lowercase, so direct comparison works
+        const existingMember = await Membership.findOne({ email: normalizedEmail });
+        
+        if (existingMember) {
+            // Check the status of existing membership
+            if (existingMember.status === 'approved') {
+                return res.status(400).json({
+                    success: false,
+                    message: 'You are already a member of Leo Club. This email address is already registered.'
+                });
+            } else if (existingMember.status === 'pending') {
+                return res.status(400).json({
+                    success: false,
+                    message: 'You already have a pending membership application. Please wait for the review process.'
+                });
+            } else if (existingMember.status === 'rejected') {
+                return res.status(400).json({
+                    success: false,
+                    message: 'You have already submitted a membership application with this email address. Please contact us if you wish to reapply.'
+                });
+            }
+        }
+        
+        // Normalize email in request body before creating membership
+        req.body.email = normalizedEmail;
+        
+        // If no existing member found, create new application
         const membershipData = new Membership(req.body);
         await membershipData.save();
         
@@ -16,6 +55,15 @@ router.post('/', async (req, res) => {
         });
     } catch (error) {
         console.error('Membership submission error:', error);
+        
+        // Handle duplicate key error (MongoDB unique constraint)
+        if (error.code === 11000 || error.message.includes('duplicate')) {
+            return res.status(400).json({
+                success: false,
+                message: 'This email address has already been used for a membership application.'
+            });
+        }
+        
         res.status(400).json({
             success: false,
             message: error.message || 'Failed to submit membership application'
@@ -67,12 +115,40 @@ router.patch('/:id/status', requireAuth, async (req, res) => {
         if (!['approved', 'rejected'].includes(status)) {
             return res.status(400).json({ success: false, message: 'Status must be approved or rejected' });
         }
+        
+        // Get the current application to check previous status
+        const currentApplication = await Membership.findById(req.params.id);
+        if (!currentApplication) {
+            return res.status(404).json({ success: false, message: 'Application not found' });
+        }
+        
+        // Only send email if status is actually changing
+        const statusChanged = currentApplication.status !== status;
+        
+        // Update the application status
         const application = await Membership.findByIdAndUpdate(
             req.params.id,
             { status },
             { new: true }
         );
-        if (!application) return res.status(404).json({ success: false, message: 'Application not found' });
+        
+        // Send email notification if status changed and email service is configured
+        if (statusChanged && process.env.SMTP_USER && process.env.SMTP_PASSWORD) {
+            try {
+                if (status === 'approved') {
+                    await sendApprovalEmail(application);
+                } else if (status === 'rejected') {
+                    await sendRejectionEmail(application);
+                }
+            } catch (emailError) {
+                // Log email error but don't fail the request
+                console.error('Failed to send email notification:', emailError);
+                // Still return success since the status was updated
+            }
+        } else if (statusChanged && (!process.env.SMTP_USER || !process.env.SMTP_PASSWORD)) {
+            console.warn('Email service not configured. Email notification not sent.');
+        }
+        
         res.json({ success: true, data: application });
     } catch (error) {
         console.error('Error updating membership status:', error);
