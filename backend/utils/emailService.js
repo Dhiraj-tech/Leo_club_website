@@ -2,18 +2,23 @@ const nodemailer = require('nodemailer');
 const fs = require('fs');
 const path = require('path');
 
+// Sender email - use SENDER_EMAIL env var, or fall back to SMTP_USER
+const SENDER_EMAIL = process.env.SENDER_EMAIL || process.env.SMTP_USER;
+
 // Log email config on startup (hide password)
 console.log('Email Config:', {
-    host: process.env.SMTP_HOST || 'smtp.gmail.com',
+    host: process.env.SMTP_HOST || 'smtp-relay.brevo.com',
     port: process.env.SMTP_PORT || 587,
     user: process.env.SMTP_USER || 'NOT SET',
-    password: process.env.SMTP_PASSWORD ? '***SET***' : 'NOT SET'
+    password: process.env.SMTP_PASSWORD ? '***SET***' : 'NOT SET',
+    senderEmail: SENDER_EMAIL || 'NOT SET'
 });
 
 // Create transporter using environment variables
+// Default to Brevo (Sendinblue) SMTP which works on cloud hosting like Render
+// Gmail SMTP is blocked by most cloud providers
 const transporter = nodemailer.createTransport({
-    service: 'gmail',
-    host: process.env.SMTP_HOST || 'smtp.gmail.com',
+    host: process.env.SMTP_HOST || 'smtp-relay.brevo.com',
     port: parseInt(process.env.SMTP_PORT) || 587,
     secure: false,
     auth: {
@@ -81,7 +86,7 @@ async function sendApprovalEmail(membershipData) {
         : '<h1 style="font-size: 24px; font-weight: 600; margin: 0;">Leo Club</h1>';
     
     const mailOptions = {
-        from: `"Leo Club" <${process.env.SMTP_USER}>`,
+        from: `"Leo Club" <${SENDER_EMAIL}>`,
         to: email,
         subject: 'Membership Application Approved - Leo Club',
         attachments: logoAttachment ? [logoAttachment] : [],
@@ -303,7 +308,7 @@ async function sendRejectionEmail(membershipData) {
         : '<h1 style="font-size: 24px; font-weight: 600; margin: 0;">Leo Club</h1>';
     
     const mailOptions = {
-        from: `"Leo Club" <${process.env.SMTP_USER}>`,
+        from: `"Leo Club" <${SENDER_EMAIL}>`,
         to: email,
         subject: 'Membership Application Status - Leo Club',
         attachments: logoAttachment ? [logoAttachment] : [],
@@ -522,7 +527,7 @@ async function sendNewsletterConfirmationEmail(email) {
         : '<h1 style="font-size: 24px; font-weight: 600; margin: 0;">Leo Club</h1>';
     
     const mailOptions = {
-        from: `"Leo Club" <${process.env.SMTP_USER}>`,
+        from: `"Leo Club" <${SENDER_EMAIL}>`,
         to: email,
         subject: 'Welcome to Leo Club Newsletter!',
         attachments: logoAttachment ? [logoAttachment] : [],
@@ -747,7 +752,7 @@ async function sendNewsletterUnsubscribeEmail(email) {
         : '<h1 style="font-size: 24px; font-weight: 600; margin: 0;">Leo Club</h1>';
     
     const mailOptions = {
-        from: `"Leo Club" <${process.env.SMTP_USER}>`,
+        from: `"Leo Club" <${SENDER_EMAIL}>`,
         to: email,
         subject: 'You have been unsubscribed - Leo Club Newsletter',
         attachments: logoAttachment ? [logoAttachment] : [],
