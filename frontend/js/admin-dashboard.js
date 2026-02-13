@@ -29,21 +29,27 @@ document.addEventListener('DOMContentLoaded', async function () {
 
     const membersEl = document.getElementById('membersCount');
     const contactEl = document.getElementById('contactCount');
+    const newsletterEl = document.getElementById('newsletterCount');
 
     try {
-        const [contactRes, membershipRes] = await Promise.all([
+        const [contactRes, membershipRes, newsletterRes] = await Promise.all([
             adminFetch(`${API_BASE}/api/contact?page=1&limit=1`),
-            adminFetch(`${API_BASE}/api/membership?page=1&limit=1`)
+            adminFetch(`${API_BASE}/api/membership?page=1&limit=1`),
+            adminFetch(`${API_BASE}/api/newsletter/all`)
         ]);
         const contactJson = await contactRes.json();
         const membershipJson = await membershipRes.json();
+        const newsletterJson = await newsletterRes.json();
         const contactTotal = contactJson.total ?? 0;
         const membershipTotal = membershipJson.total ?? 0;
+        const newsletterTotal = newsletterJson.total ?? 0;
 
         animateCount(membersEl, membershipTotal);
         animateCount(contactEl, contactTotal);
+        animateCount(newsletterEl, newsletterTotal);
     } catch (err) {
         membersEl.textContent = '0';
         contactEl.textContent = '0';
+        if (newsletterEl) newsletterEl.textContent = '0';
     }
 });

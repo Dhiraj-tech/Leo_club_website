@@ -21,14 +21,14 @@
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto">
                     <li class="nav-item"><a class="nav-link" href="index.html">Home</a></li>
-                    <li class="nav-item"><a class="nav-link" href="about.html">About</a></li>
+                    <li class="nav-item"><a class="nav-link" href="projects.html">Projects</a></li>
+                    <li class="nav-item"><a class="nav-link" href="events.html">Events</a></li>
                     <li class="nav-item"><a class="nav-link" href="board.html">Board of Director</a></li>
                     <li class="nav-item"><a class="nav-link" href="gallery.html">Gallery</a></li>
-                    <li class="nav-item"><a class="nav-link" href="events.html">Events</a></li>
                     <li class="nav-item"><a class="nav-link" href="awards.html">Awards</a></li>
-                    <li class="nav-item"><a class="nav-link" href="projects.html">Projects</a></li>
                     <li class="nav-item"><a class="nav-link active" href="membership.html">Membership</a></li>
-                    <li class="nav-item"><a class="nav-link" href="contact.html">Contact</a></li>
+                    <li class="nav-item"><a class="nav-link" href="about.html">About Us</a></li>
+                    <li class="nav-item"><a class="nav-link" href="contact.html">Contact Us</a></li>
                 </ul>
             </div>
         </div>
@@ -59,6 +59,7 @@
                                 <div class="mb-3">
                                     <label for="dob" class="form-label">Date of Birth <span class="text-danger">*</span></label>
                                     <input type="date" class="form-control" id="dob" required>
+                                    <div class="invalid-feedback" id="dobError">You must be at least 18 years old to apply for membership.</div>
                                 </div>
 
                                 <div class="mb-3">
@@ -78,7 +79,24 @@
 
                                 <div class="mb-3">
                                     <label for="phone" class="form-label">Phone Number <span class="text-danger">*</span></label>
-                                    <input type="tel" class="form-control" id="phone" required>
+                                    <div class="input-group">
+                                        <select class="form-select" id="countryCode" style="max-width: 140px;" required>
+                                            <option value="+977" selected>🇳🇵 +977</option>
+                                            <option value="+91">🇮🇳 +91</option>
+                                            <option value="+1">🇺🇸 +1</option>
+                                            <option value="+44">🇬🇧 +44</option>
+                                            <option value="+86">🇨🇳 +86</option>
+                                            <option value="+61">🇦🇺 +61</option>
+                                            <option value="+81">🇯🇵 +81</option>
+                                            <option value="+82">🇰🇷 +82</option>
+                                            <option value="+971">🇦🇪 +971</option>
+                                            <option value="+966">🇸🇦 +966</option>
+                                            <option value="+60">🇲🇾 +60</option>
+                                            <option value="+974">🇶🇦 +974</option>
+                                        </select>
+                                        <input type="tel" class="form-control" id="phone" inputmode="numeric" pattern="[0-9]{10}" maxlength="10" required>
+                                    </div>
+                                    <div class="invalid-feedback" id="phoneError">Please enter a valid 10-digit phone number (digits only).</div>
                                 </div>
 
                                 <div class="mb-3">

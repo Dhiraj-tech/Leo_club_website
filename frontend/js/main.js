@@ -25,15 +25,120 @@ document.addEventListener('DOMContentLoaded', function() {
     // Membership Form Handler
     const membershipForm = document.getElementById('membershipForm');
     if (membershipForm) {
+        // Set max date for DOB (must be at least 18 years old)
+        const dobInput = document.getElementById('dob');
+        if (dobInput) {
+            const today = new Date();
+            const maxDate = new Date(today.getFullYear() - 18, today.getMonth(), today.getDate());
+            dobInput.setAttribute('max', maxDate.toISOString().split('T')[0]);
+
+            // Real-time validation on date change
+            dobInput.addEventListener('change', function() {
+                validateAge(dobInput);
+            });
+        }
+
+        // Phone number validation setup
+        const phoneInput = document.getElementById('phone');
+        if (phoneInput) {
+            // Allow only digits while typing
+            phoneInput.addEventListener('input', function() {
+                this.value = this.value.replace(/\D/g, '');
+                if (this.value.length > 10) {
+                    this.value = this.value.slice(0, 10);
+                }
+                validatePhone(this);
+            });
+
+            // Also block non-digit keys from being entered
+            phoneInput.addEventListener('keypress', function(e) {
+                if (!/\d/.test(e.key)) {
+                    e.preventDefault();
+                }
+            });
+
+            // Validate on blur
+            phoneInput.addEventListener('blur', function() {
+                validatePhone(this);
+            });
+        }
+
+        // Phone validation function
+        function validatePhone(input) {
+            const phoneValue = input.value;
+            const phoneError = document.getElementById('phoneError');
+            if (!phoneValue) {
+                input.classList.remove('is-invalid', 'is-valid');
+                if (phoneError) phoneError.style.display = 'none';
+                return true;
+            }
+
+            const isValid = /^\d{10}$/.test(phoneValue);
+            if (!isValid) {
+                input.classList.add('is-invalid');
+                input.classList.remove('is-valid');
+                if (phoneError) phoneError.style.display = 'block';
+                return false;
+            } else {
+                input.classList.remove('is-invalid');
+                input.classList.add('is-valid');
+                if (phoneError) phoneError.style.display = 'none';
+                return true;
+            }
+        }
+
+        // Age validation function
+        function validateAge(input) {
+            const dobValue = input.value;
+            const dobError = document.getElementById('dobError');
+            if (!dobValue) return true;
+
+            const dob = new Date(dobValue);
+            const today = new Date();
+            let age = today.getFullYear() - dob.getFullYear();
+            const monthDiff = today.getMonth() - dob.getMonth();
+            if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dob.getDate())) {
+                age--;
+            }
+
+            if (age < 18) {
+                input.classList.add('is-invalid');
+                input.classList.remove('is-valid');
+                if (dobError) dobError.style.display = 'block';
+                return false;
+            } else {
+                input.classList.remove('is-invalid');
+                input.classList.add('is-valid');
+                if (dobError) dobError.style.display = 'none';
+                return true;
+            }
+        }
+
         membershipForm.addEventListener('submit', async function(e) {
             e.preventDefault();
+
+            // Validate age before submission
+            const dobField = document.getElementById('dob');
+            if (!validateAge(dobField)) {
+                dobField.focus();
+                showAlert('danger', 'You must be at least 18 years old to apply for membership.');
+                return;
+            }
+
+            // Validate phone before submission
+            const phoneField = document.getElementById('phone');
+            if (!validatePhone(phoneField)) {
+                phoneField.focus();
+                showAlert('danger', 'Please enter a valid 10-digit phone number (digits only).');
+                return;
+            }
             
             const formData = {
                 fullName: document.getElementById('fullName').value,
                 dob: document.getElementById('dob').value,
                 gender: document.getElementById('gender').value,
                 email: document.getElementById('email').value,
-                phone: document.getElementById('phone').value,
+                phone: document.getElementById('countryCode').value + ' ' + document.getElementById('phone').value,
                 address: document.getElementById('address').value,
                 school: document.getElementById('school').value,
                 level: document.getElementById('level').value,
@@ -315,6 +420,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (response.ok) {
                     showAlert('success', result.message || 'Thank you for subscribing! Please check your email for confirmation.');
                     newsletterForm.reset();
+                } else if (response.status === 400 && result.message && result.message.toLowerCase().includes('already subscribed')) {
+                    showAlert('warning', 'You are already subscribed to our newsletter.');
                 } else {
                     showAlert('danger', result.message || 'An error occurred. Please try again.');
                 }

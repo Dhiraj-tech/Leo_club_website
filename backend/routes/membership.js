@@ -16,6 +16,34 @@ router.post('/', async (req, res) => {
                 message: 'Email address is required'
             });
         }
+
+        // Validate phone number - must contain exactly 10 digits (after country code)
+        if (req.body.phone) {
+            const phoneDigits = req.body.phone.replace(/\D/g, '').slice(-10);
+            if (phoneDigits.length !== 10) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Please provide a valid 10-digit phone number.'
+                });
+            }
+        }
+
+        // Validate age - must be at least 18 years old
+        if (req.body.dob) {
+            const dob = new Date(req.body.dob);
+            const today = new Date();
+            let age = today.getFullYear() - dob.getFullYear();
+            const monthDiff = today.getMonth() - dob.getMonth();
+            if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dob.getDate())) {
+                age--;
+            }
+            if (age < 18) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'You must be at least 18 years old to apply for membership.'
+                });
+            }
+        }
         
         // Check if email already exists in the database
         // Schema already converts to lowercase, so direct comparison works

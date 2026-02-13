@@ -84,6 +84,9 @@ app.get('/admin/members', (req, res) => {
 app.get('/admin/contacts', (req, res) => {
     res.sendFile(path.join(__dirname, '../frontend', 'admin-contacts.html'));
 });
+app.get('/admin/newsletter', (req, res) => {
+    res.sendFile(path.join(__dirname, '../frontend', 'admin-newsletter.html'));
+});
 
 // Start Server
 app.listen(PORT, () => {

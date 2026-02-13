@@ -1,7 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const Newsletter = require('../models/Newsletter');
-const { sendNewsletterConfirmationEmail } = require('../utils/emailService');
+const requireAuth = require('../middleware/requireAuth');
+const { sendNewsletterConfirmationEmail, sendNewsletterUnsubscribeEmail } = require('../utils/emailService');
 
 // Subscribe to newsletter
 router.post('/subscribe', async (req, res) => {
@@ -133,30 +134,72 @@ router.post('/unsubscribe', async (req, res) => {
     }
 });
 
-// Get all newsletter subscriptions (admin only - requires auth middleware)
-router.get('/all', async (req, res) => {
+// Get all newsletter subscriptions with pagination (admin only)
+router.get('/all', requireAuth, async (req, res) => {
     try {
-        // Check if user is authenticated (you can add proper auth middleware here)
-        if (!req.session || !req.session.userId) {
-            return res.status(401).json({
-                success: false,
-                message: 'Unauthorized. Admin access required.'
-            });
-        }
-
+        const page = Math.max(1, parseInt(req.query.page) || 1);
+        const limit = Math.min(50, Math.max(1, parseInt(req.query.limit) || 10));
+        const skip = (page - 1) * limit;
+        const total = await Newsletter.countDocuments();
         const subscriptions = await Newsletter.find()
-            .sort({ subscribedAt: -1 });
+            .sort({ subscribedAt: -1 })
+            .skip(skip)
+            .limit(limit)
+            .lean();
 
         res.status(200).json({
             success: true,
-            count: subscriptions.length,
-            data: subscriptions
+            data: subscriptions,
+            total,
+            page,
+            limit,
+            totalPages: Math.ceil(total / limit)
         });
     } catch (error) {
         console.error('Error fetching newsletter subscriptions:', error);
         res.status(500).json({
             success: false,
             message: 'Failed to fetch newsletter subscriptions'
+        });
+    }
+});
+
+// Delete a newsletter subscriber (admin only)
+router.delete('/:id', requireAuth, async (req, res) => {
+    try {
+        // Find the subscriber first to get their email
+        const subscriber = await Newsletter.findById(req.params.id);
+        if (!subscriber) {
+            return res.status(404).json({
+                success: false,
+                message: 'Subscriber not found.'
+            });
+        }
+
+        const subscriberEmail = subscriber.email;
+
+        // Delete the subscriber
+        await Newsletter.findByIdAndDelete(req.params.id);
+
+        // Send unsubscribe notification email
+        if (process.env.SMTP_USER && process.env.SMTP_PASSWORD) {
+            try {
+                await sendNewsletterUnsubscribeEmail(subscriberEmail);
+            } catch (emailError) {
+                console.error('Failed to send unsubscribe email:', emailError);
+                // Don't fail the delete if email fails
+            }
+        }
+
+        res.status(200).json({
+            success: true,
+            message: 'Subscriber removed and notification email sent.'
+        });
+    } catch (error) {
+        console.error('Error deleting newsletter subscriber:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to delete subscriber.'
         });
     }
 });
