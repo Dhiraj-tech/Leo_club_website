@@ -2,22 +2,30 @@ const nodemailer = require('nodemailer');
 const fs = require('fs');
 const path = require('path');
 
-// Create transporter using environment variables
-const transporter = nodemailer.createTransport({
+// Log email config on startup (hide password)
+console.log('Email Config:', {
     host: process.env.SMTP_HOST || 'smtp.gmail.com',
     port: process.env.SMTP_PORT || 587,
-    secure: false, // true for 465, false for other ports
+    user: process.env.SMTP_USER || 'NOT SET',
+    password: process.env.SMTP_PASSWORD ? '***SET***' : 'NOT SET'
+});
+
+// Create transporter using environment variables
+const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    host: process.env.SMTP_HOST || 'smtp.gmail.com',
+    port: parseInt(process.env.SMTP_PORT) || 587,
+    secure: false,
     auth: {
         user: process.env.SMTP_USER,
         pass: process.env.SMTP_PASSWORD
     },
     tls: {
-        // Do not fail on invalid certificates (needed for some network configurations)
         rejectUnauthorized: false
     },
-    connectionTimeout: 10000, // 10 seconds timeout
-    greetingTimeout: 10000,
-    socketTimeout: 10000
+    connectionTimeout: 30000,
+    greetingTimeout: 30000,
+    socketTimeout: 30000
 });
 
 // Handle transporter errors gracefully to prevent server crashes
@@ -25,9 +33,16 @@ transporter.on('error', (error) => {
     console.error('Email transporter error (non-fatal):', error.message);
 });
 
-// Check if email service is configured (without verifying connection to avoid crashes)
+// Verify SMTP connection on startup
 if (process.env.SMTP_USER && process.env.SMTP_PASSWORD) {
-    // console.log('Email service configured - emails will be sent when membership status changes');
+    transporter.verify()
+        .then(() => {
+            console.log('SMTP connection verified successfully - Email service is ready');
+        })
+        .catch((error) => {
+            console.error('SMTP verification FAILED:', error.message);
+            console.error('Full SMTP error:', JSON.stringify(error, null, 2));
+        });
 } else {
     console.log('Email service not configured - SMTP credentials missing');
 }
@@ -263,11 +278,15 @@ async function sendApprovalEmail(membershipData) {
     };
 
     try {
+        console.log('Attempting to send approval email to:', email);
         const info = await transporter.sendMail(mailOptions);
-        // console.log('Approval email sent successfully:', info.messageId);
+        console.log('Approval email sent successfully:', info.messageId, 'to:', email);
         return { success: true, messageId: info.messageId };
     } catch (error) {
-        console.error('Error sending approval email:', error);
+        console.error('Error sending approval email to:', email);
+        console.error('Error details:', error.message);
+        console.error('Error code:', error.code);
+        console.error('Full error:', JSON.stringify(error, Object.getOwnPropertyNames(error), 2));
         return { success: false, error: error.message };
     }
 }
@@ -704,14 +723,16 @@ async function sendNewsletterConfirmationEmail(email) {
     };
 
     try {
+        console.log('Attempting to send newsletter confirmation email to:', email);
         const info = await transporter.sendMail(mailOptions);
+        console.log('Newsletter confirmation email sent successfully:', info.messageId, 'to:', email);
         return { success: true, messageId: info.messageId };
     } catch (error) {
-        const errorMessage = error.code === 'ECONNRESET' || error.code === 'ETIMEDOUT' 
-            ? 'Email service connection error. Please check your network and SMTP settings.'
-            : error.message;
-        console.error('Error sending newsletter confirmation email:', errorMessage);
-        return { success: false, error: errorMessage };
+        console.error('Error sending newsletter confirmation email to:', email);
+        console.error('Error details:', error.message);
+        console.error('Error code:', error.code);
+        console.error('Full error:', JSON.stringify(error, Object.getOwnPropertyNames(error), 2));
+        return { success: false, error: error.message };
     }
 }
 
