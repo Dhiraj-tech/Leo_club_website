@@ -3,12 +3,21 @@ const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
 const cors = require('cors');
 const session = require('express-session');
-const MongoStore = require('connect-mongo');
+const { MongoStore } = require('connect-mongo');
 const path = require('path');
 require('dotenv').config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+const MONGO_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/leo-club';
+
+// MongoDB Connection
+mongoose.connect(MONGO_URI, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true
+})
+.then(() => console.log('MongoDB Connected'))
+.catch(err => console.error('MongoDB Connection Error:', err));
 
 // Middleware
 app.use(cors({ origin: true, credentials: true }));
@@ -20,17 +29,10 @@ app.use(session({
     saveUninitialized: false,
     cookie: { httpOnly: true, maxAge: 24 * 60 * 60 * 1000 },
     store: MongoStore.create({
-        mongoUrl: process.env.MONGODB_URI || 'mongodb://localhost:27017/leo-club',
+        mongoUrl: MONGO_URI,
         collectionName: 'sessions'
     })
 }));
-// MongoDB Connection
-mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/leo-club', {
-    useNewUrlParser: true,
-    useUnifiedTopology: true
-})
-.then(() => console.log('MongoDB Connected'))
-.catch(err => console.error('MongoDB Connection Error:', err));
 
 // API routes first (so /api/* is never served as static files)
 app.use('/api/admin', require('./routes/auth'));
