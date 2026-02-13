@@ -25,12 +25,17 @@
             <a class="navbar-brand" href="/admin">
                 <img src="/images/logo.png" alt="Logo" height="40" class="d-inline-block align-top me-2">
             </a>
-            <div class="navbar-nav ms-auto">
-                <a class="nav-link" href="/admin">Dashboard</a>
-                <a class="nav-link active" href="/admin/members">Members</a>
-                <a class="nav-link" href="/admin/contacts">Contacts</a>
-                <a class="nav-link" href="/admin/newsletter">Newsletter</a>
-                <a class="nav-link" href="#" id="logoutLink">Logout</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#adminNavbar">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="adminNavbar">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item"><a class="nav-link" href="/admin">Dashboard</a></li>
+                    <li class="nav-item"><a class="nav-link active" href="/admin/members">Members</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/admin/contacts">Contacts</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/admin/newsletter">Newsletter</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#" id="logoutLink">Logout</a></li>
+                </ul>
             </div>
         </div>
     </nav>
